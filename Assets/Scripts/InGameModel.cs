@@ -16,12 +16,15 @@ public class InGameModel : MonoBehaviour
     private List<Tile> tileList = new List<Tile>();
     private Tile[,] tileQueue;
     private int index = 0;
+    
 
     //タイルの座標情報
     private int indexI;
     private int indexJ;
     private List<(int, int)> prevIndexList = new List<(int, int)>();
     private (int, int) startTilePos;
+
+    private List<(float,float,float,float)> tileOffset = new List<(float,float,float,float)>();
 
     //通知発火
     private readonly Subject<Unit> clearEffect = new Subject<Unit>();
@@ -76,6 +79,8 @@ public class InGameModel : MonoBehaviour
 
         SetStageData();
         pointer = new PointerEventData(EventSystem.current);
+
+        
     }
 
     private void SetStageData()
@@ -83,6 +88,9 @@ public class InGameModel : MonoBehaviour
         for (var i = 0; i < tileArray.Length; i++)
         {
             tileList.Add(tileArray[i]);
+            var hoge = tileArray[i].GetComponent<RectTransform>().offsetMax;
+            var koge = tileArray[i].GetComponent<RectTransform>().offsetMin;
+            tileOffset.Add((hoge.x, hoge.y, koge.x, koge.y));
         }
         for (var i = 0; i < MaxCol; i++)
         {
@@ -185,10 +193,14 @@ public class InGameModel : MonoBehaviour
                                 &&tileQueue[i, j].flg)
                             {
                                 tileQueue[indexI, indexJ].BackedTile();
+                                tileQueue[indexI, indexJ].GetComponent<RectTransform>().offsetMax = new Vector2(tileQueue[indexI, indexJ].tileOffset.Item1, tileQueue[indexI, indexJ].tileOffset.Item2);
+                                tileQueue[indexI, indexJ].GetComponent<RectTransform>().offsetMin = new Vector2(tileQueue[indexI, indexJ].tileOffset.Item3, tileQueue[indexI, indexJ].tileOffset.Item4);
+
                                 prevIndexList.RemoveAt(prevIndexList.Count - 1);
                                 indexI = prevIndexList[prevIndexList.Count - 1].Item1;
                                 indexJ = prevIndexList[prevIndexList.Count - 1].Item2;
                             }
+  
                             return;
                         }
 
@@ -200,10 +212,41 @@ public class InGameModel : MonoBehaviour
                             tileQueue[indexI, Mathf.Clamp(indexJ - 1, 0, 3)] == tileQueue[i, j])
                         {
                             tileQueue[i, j].TouchedTile();
+                            //jがx軸
+                            
+                            if (indexJ<j)
+                            {
+                                //右に移動
+                                    var rectX = tileQueue[i, j].GetComponent<RectTransform>().offsetMin.x;
+                                    var rectY = tileQueue[i, j].GetComponent<RectTransform>().offsetMin.y;
+                                    tileQueue[i, j].GetComponent<RectTransform>().offsetMin = new Vector2(rectX-40, rectY);
+                            }
+                            if (indexJ > j)
+                            {
+                                //左
+                                    var rectX = tileQueue[i, j].GetComponent<RectTransform>().offsetMax.x;
+                                    var rectY = tileQueue[i, j].GetComponent<RectTransform>().offsetMax.y;
+                                    tileQueue[i, j].GetComponent<RectTransform>().offsetMax = new Vector2(rectX + 40, rectY);
+                            }
+                            if (indexI < i)
+                            {
+                                //下
+                                    var rectX = tileQueue[i, j].GetComponent<RectTransform>().offsetMax.x;
+                                    var rectY = tileQueue[i, j].GetComponent<RectTransform>().offsetMax.y;
+                                    tileQueue[i, j].GetComponent<RectTransform>().offsetMax = new Vector2(rectX, rectY+40);
+                            }
+                            if(indexI > i)
+                            {
+                                //上
+                                var rectX = tileQueue[i, j].GetComponent<RectTransform>().offsetMin.x;
+                                var rectY = tileQueue[i, j].GetComponent<RectTransform>().offsetMin.y;
+                                tileQueue[i, j].GetComponent<RectTransform>().offsetMin = new Vector2(rectX, rectY - 40);
+                            }
                             indexI = i;
                             indexJ = j;
                             prevIndexList.Add((i, j));
                         }
+
                     }
                 }
             }
@@ -321,7 +364,10 @@ public class InGameModel : MonoBehaviour
         //todo
         for (var i = 0; i < tileArray.Length; i++)
         {
+            tileArray[i].GetComponent<RectTransform>().offsetMax = new Vector2(tileOffset[i].Item1, tileOffset[i].Item2);
+            tileArray[i].GetComponent<RectTransform>().offsetMin = new Vector2(tileOffset[i].Item3, tileOffset[i].Item4);
             tileList.Remove(tileArray[i]);
+
         }
         SetStageData();
         for (var i = 0; i < MaxCol; i++)

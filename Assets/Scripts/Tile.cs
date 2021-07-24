@@ -7,24 +7,31 @@ public class Tile : MonoBehaviour
 {
     [SerializeField] private Image image;
     public bool flg = false;
-    private string colorString = "#DCDDE0";
-    
+    private string colorString = "#FFFFFF";
+    public (float, float, float, float) tileOffset;
+    [SerializeField] private Image[] indexImage;
+    [SerializeField] private string[] colorCode;
+
     // Start is called before the first frame update
     void Start()
     {
+        var hoge = this.GetComponent<RectTransform>().offsetMax;
+        var koge = this.GetComponent<RectTransform>().offsetMin;
+        tileOffset = (hoge.x, hoge.y, koge.x, koge.y);
 
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     public void TouchedTile()
     {
         image.color = Color.red;
+        flg = true;
+    }
+
+    public void drawTile(string colorCode)
+    {
+        Color color = default(Color);
+        ColorUtility.TryParseHtmlString(colorCode, out color);
+        image.color = color;
         flg = true;
     }
 
