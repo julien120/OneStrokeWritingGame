@@ -9,8 +9,12 @@ public class Tile : MonoBehaviour
     public bool flg = false;
     private string colorString = "#FFFFFF";
     public (float, float, float, float) tileOffset;
-    [SerializeField] private Image[] indexImage;
+    [SerializeField] private Sprite[] indexImage;
     [SerializeField] private string[] colorCode;
+    [SerializeField] public Image leftImage;
+    [SerializeField] public Image rightImage;
+    [SerializeField] public Image bottomImage;
+    [SerializeField] public Image topImage;
 
     // Start is called before the first frame update
     void Start()
@@ -21,33 +25,50 @@ public class Tile : MonoBehaviour
 
     }
 
-    public void TouchedTile()
-    {
-        image.color = Color.red;
-        flg = true;
-    }
-
-    public void drawTile(string colorCode)
+    public void TouchedTile(int stageIndex)
     {
         Color color = default(Color);
-        ColorUtility.TryParseHtmlString(colorCode, out color);
+        ColorUtility.TryParseHtmlString(colorCode[stageIndex], out color);
         image.color = color;
-        flg = true;
     }
 
-    public void BackedTile()
+
+    public void BackedTile(int stageIndex)
     {
         // DCDDE0
         Color color = default(Color);
         ColorUtility.TryParseHtmlString(colorString, out color);
+        image.sprite = null;
         image.color = color;
         flg = false;
+
+        for (int k = 0; k < transform.childCount; k++)
+        {
+            var childObject = transform.GetChild(k).gameObject;
+            childObject.SetActive(false);
+        }
     }
 
-    public void StartTilePos()
+    public void StartTilePos(int stageIndex)
     {
-        image.color = Color.blue;
+        image.sprite = indexImage[stageIndex];
+       // image.color = Color.blue;
     }
 
+    public void DrawHeadTile(int stageIndex)
+    {
+        image.sprite = indexImage[stageIndex];
+        Color color = default(Color);
+        ColorUtility.TryParseHtmlString(colorString, out color);
+        image.color = color;
+        flg = true;
+    }
+
+    public void DrawSideColor(Image hoge, int stageIndex)
+    {
+        Color color = default(Color);
+        ColorUtility.TryParseHtmlString(colorCode[stageIndex], out color);
+        hoge.color = color;
+    }
 
 }

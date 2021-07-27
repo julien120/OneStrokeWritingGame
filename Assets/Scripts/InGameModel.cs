@@ -16,7 +16,6 @@ public class InGameModel : MonoBehaviour
     private List<Tile> tileList = new List<Tile>();
     private Tile[,] tileQueue;
     private int index = 0;
-    
 
     //タイルの座標情報
     private int indexI;
@@ -127,7 +126,7 @@ public class InGameModel : MonoBehaviour
     /// <param name="j"></param>
     private void InGameStart(int i,int j)
     {
-        tileQueue[i, j].StartTilePos();
+        tileQueue[i, j].StartTilePos(stageDatas[stagedataidx].stageIndex);
         startTilePos = (i, j);
     }
 
@@ -149,6 +148,7 @@ public class InGameModel : MonoBehaviour
         else if (Input.GetMouseButtonUp(0))
         {
             gamestate = GameState.MATCH;
+            return;
         }     
     }
 
@@ -178,7 +178,7 @@ public class InGameModel : MonoBehaviour
                             indexI = i;
                             indexJ = j;
                             prevIndexList.Add((indexI, indexJ));
-                            tileQueue[i, j].TouchedTile();
+                            tileQueue[i, j].DrawHeadTile(stageDatas[stagedataidx].stageIndex);
                             quickFlg = false;
                             return;
                         }
@@ -192,9 +192,10 @@ public class InGameModel : MonoBehaviour
                             if (tileQueue[i, j] == tileQueue[prevIndexList[prevIndexList.Count - 2].Item1, prevIndexList[prevIndexList.Count - 2].Item2]
                                 &&tileQueue[i, j].flg)
                             {
-                                tileQueue[indexI, indexJ].BackedTile();
-                                tileQueue[indexI, indexJ].GetComponent<RectTransform>().offsetMax = new Vector2(tileQueue[indexI, indexJ].tileOffset.Item1, tileQueue[indexI, indexJ].tileOffset.Item2);
-                                tileQueue[indexI, indexJ].GetComponent<RectTransform>().offsetMin = new Vector2(tileQueue[indexI, indexJ].tileOffset.Item3, tileQueue[indexI, indexJ].tileOffset.Item4);
+                                tileQueue[indexI, indexJ].BackedTile(stageDatas[stagedataidx].stageIndex);
+                                //tileQueue[indexI, indexJ].GetComponent<RectTransform>().offsetMax = new Vector2(tileQueue[indexI, indexJ].tileOffset.Item1, tileQueue[indexI, indexJ].tileOffset.Item2);
+                                //tileQueue[indexI, indexJ].GetComponent<RectTransform>().offsetMin = new Vector2(tileQueue[indexI, indexJ].tileOffset.Item3, tileQueue[indexI, indexJ].tileOffset.Item4);
+                                tileQueue[i, j].DrawHeadTile(stageDatas[stagedataidx].stageIndex);
 
                                 prevIndexList.RemoveAt(prevIndexList.Count - 1);
                                 indexI = prevIndexList[prevIndexList.Count - 1].Item1;
@@ -211,36 +212,46 @@ public class InGameModel : MonoBehaviour
                             tileQueue[indexI, Mathf.Clamp(indexJ + 1, 0, 3)] == tileQueue[i, j] ||
                             tileQueue[indexI, Mathf.Clamp(indexJ - 1, 0, 3)] == tileQueue[i, j])
                         {
-                            tileQueue[i, j].TouchedTile();
-                            //jがx軸
-                            
+                            tileQueue[indexI, indexJ].TouchedTile(stageDatas[stagedataidx].stageIndex);
+          
+                            tileQueue[i, j].DrawHeadTile(stageDatas[stagedataidx].stageIndex);
+
+
                             if (indexJ<j)
                             {
                                 //右に移動
                                     var rectX = tileQueue[i, j].GetComponent<RectTransform>().offsetMin.x;
                                     var rectY = tileQueue[i, j].GetComponent<RectTransform>().offsetMin.y;
-                                    tileQueue[i, j].GetComponent<RectTransform>().offsetMin = new Vector2(rectX-40, rectY);
+                                    //tileQueue[i, j].GetComponent<RectTransform>().offsetMin = new Vector2(rectX-40, rectY);
+                                    tileQueue[i, j].leftImage.gameObject.SetActive(true);
+                                    tileQueue[i, j].DrawSideColor(tileQueue[i, j].leftImage, stageDatas[stagedataidx].stageIndex);
                             }
                             if (indexJ > j)
                             {
                                 //左
                                     var rectX = tileQueue[i, j].GetComponent<RectTransform>().offsetMax.x;
                                     var rectY = tileQueue[i, j].GetComponent<RectTransform>().offsetMax.y;
-                                    tileQueue[i, j].GetComponent<RectTransform>().offsetMax = new Vector2(rectX + 40, rectY);
+                                    //tileQueue[i, j].GetComponent<RectTransform>().offsetMax = new Vector2(rectX + 40, rectY);
+                                    tileQueue[i, j].rightImage.gameObject.SetActive(true);
+                                    tileQueue[i, j].DrawSideColor(tileQueue[i, j].rightImage, stageDatas[stagedataidx].stageIndex);
                             }
                             if (indexI < i)
                             {
                                 //下
                                     var rectX = tileQueue[i, j].GetComponent<RectTransform>().offsetMax.x;
                                     var rectY = tileQueue[i, j].GetComponent<RectTransform>().offsetMax.y;
-                                    tileQueue[i, j].GetComponent<RectTransform>().offsetMax = new Vector2(rectX, rectY+40);
+                                    //tileQueue[i, j].GetComponent<RectTransform>().offsetMax = new Vector2(rectX, rectY+40);
+                                    tileQueue[i, j].topImage.gameObject.SetActive(true);
+                                    tileQueue[i, j].DrawSideColor(tileQueue[i, j].topImage, stageDatas[stagedataidx].stageIndex);
                             }
                             if(indexI > i)
                             {
                                 //上
                                 var rectX = tileQueue[i, j].GetComponent<RectTransform>().offsetMin.x;
                                 var rectY = tileQueue[i, j].GetComponent<RectTransform>().offsetMin.y;
-                                tileQueue[i, j].GetComponent<RectTransform>().offsetMin = new Vector2(rectX, rectY - 40);
+                                //tileQueue[i, j].GetComponent<RectTransform>().offsetMin = new Vector2(rectX, rectY - 40);
+                                tileQueue[i, j].bottomImage.gameObject.SetActive(true);
+                                tileQueue[i, j].DrawSideColor(tileQueue[i, j].bottomImage, stageDatas[stagedataidx].stageIndex);
                             }
                             indexI = i;
                             indexJ = j;
@@ -375,7 +386,7 @@ public class InGameModel : MonoBehaviour
             for (var j = 0; j < MaxRow; j++)
             {
                 tileQueue[i, j].gameObject.SetActive(true);
-                tileQueue[i, j].BackedTile();
+                tileQueue[i, j].BackedTile(stageDatas[stagedataidx].stageIndex);
             }
         }
 
