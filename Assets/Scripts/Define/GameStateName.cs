@@ -4,5 +4,6 @@ public enum GameState
     MATCH,
     VICTORY,
     LOSER,
-    RESULT
+    RESULT,
+    CLEAR
 };

@@ -42,25 +42,26 @@ public class InGameModel : MonoBehaviour
     [SerializeField] private Text matchText;
     [SerializeField] private Text stageText;
 
-    private const int MaxCol = 4;
+    private const int MaxCol = 5;
     private const int MaxRow = 4;
     private bool quickFlg = true;
     private bool nextflg = false;
     private PointerEventData pointer;
 
     private StageData.StageDataFormat[] stageDatas;
+    private StageData.DeleteDataFormat[] deleteDatas;
     private int stagedataidx = 0;
     private bool stageIndexFlg = true;
 
     void Start()
     {
-        tileQueue = new Tile[MaxRow, MaxCol];
+        tileQueue = new Tile[ MaxCol,MaxRow];
         Initialize();
 
         ResetStageIndex();
         LoadLevelDesignModel();
         SetLevelDesignModel();
-        //SetDepressionPosData();
+        SetDepressionPosData();
     }
 
 
@@ -72,15 +73,17 @@ public class InGameModel : MonoBehaviour
             { GameState.VICTORY, SetVictryeffects},
             { GameState.LOSER, SetLoserffects},
             { GameState.RESULT, Result},
+            {GameState.CLEAR,Clear },
             };
         gamestate = GameState.IDLE;
 
 
         SetStageData();
-        pointer = new PointerEventData(EventSystem.current);
-
-        
+        LoadDeleteTileModel();
+        pointer = new PointerEventData(EventSystem.current); 
     }
+
+
 
     private void SetStageData()
     {
@@ -101,17 +104,25 @@ public class InGameModel : MonoBehaviour
         }
     }
 
+    private int stageIndex = 0;
+    /// <summary>
+    /// 
+    /// </summary>
     private void SetDepressionPosData()
     {
-        index = 0;
+       index = 0;
+       stageIndex = 0;
         for (var i = 0; i < MaxCol; i++)
         {
             for (var j = 0; j < MaxRow; j++)
             {
-                if (tileQueue[stageDatas[stagedataidx].depressionxPos, stageDatas[stagedataidx].depressionyPos] == tileArray[index])
+                if (tileQueue[deleteDatas[stageIndex].xPos, deleteDatas[stageIndex].yPos] == tileArray[index])
                 {
                     tileList.Remove(tileArray[index]);
                     tileArray[index].gameObject.SetActive(false);
+
+                    stageIndex++;
+                    if (deleteDatas.Length == stageIndex) return;
                 }
                 index++;
             }
@@ -143,6 +154,7 @@ public class InGameModel : MonoBehaviour
 
         if (Input.GetMouseButton(0))
         {
+            flgf = true;
             MatchGetMousePosition();
         }
         else if (Input.GetMouseButtonUp(0))
@@ -207,10 +219,10 @@ public class InGameModel : MonoBehaviour
 
                         if (quickFlg) { return; }
                         //進む場合
-                        if (tileQueue[Mathf.Clamp(indexI + 1, 0, 3), indexJ] == tileQueue[i, j] ||
-                            tileQueue[Mathf.Clamp(indexI - 1, 0, 3), indexJ] == tileQueue[i, j] ||
-                            tileQueue[indexI, Mathf.Clamp(indexJ + 1, 0, 3)] == tileQueue[i, j] ||
-                            tileQueue[indexI, Mathf.Clamp(indexJ - 1, 0, 3)] == tileQueue[i, j])
+                        if (tileQueue[Mathf.Clamp(indexI + 1, 0, MaxCol-1), indexJ] == tileQueue[i, j] ||
+                            tileQueue[Mathf.Clamp(indexI - 1, 0, MaxCol - 1), indexJ] == tileQueue[i, j] ||
+                            tileQueue[indexI, Mathf.Clamp(indexJ + 1, 0, MaxRow - 1)] == tileQueue[i, j] ||
+                            tileQueue[indexI, Mathf.Clamp(indexJ - 1, 0, MaxRow - 1)] == tileQueue[i, j])
                         {
                             tileQueue[indexI, indexJ].TouchedTile(stageDatas[stagedataidx].stageIndex);
           
@@ -283,6 +295,16 @@ public class InGameModel : MonoBehaviour
 
     private void Result()
     {
+        if (stagedataidx >= stageDatas.Length)
+        {
+            Debug.Log("最後");
+            //todo:ステージ上限まで行ったらステージ０に戻る
+            matchText.text = "全てのステージクリア";
+            inGamePanel.raycastTarget = false;
+            gamestate = GameState.CLEAR;
+
+            return;
+        }
         inGamePanel.raycastTarget = false;
         nextflg = true;
         DOVirtual.DelayedCall(0.3f, () => {
@@ -292,18 +314,23 @@ public class InGameModel : MonoBehaviour
         });
     }
 
+    bool flgf = true;
     private void MatchAllTile()
     {
         inGamePanel.raycastTarget = false;
-        if (tileList.Any(x => !x.flg))
-        {
-            matchText.text = "一筆書き失敗";
-            DOVirtual.DelayedCall(0.5f, () => gamestate = GameState.LOSER);
-        }
-        else
-        {
-            matchText.text = "一筆書き成功";
-            DOVirtual.DelayedCall(0.5f, () => gamestate = GameState.VICTORY);
+        if (flgf) {
+            flgf = false;
+            if (tileList.Any(x => !x.flg))
+            {
+                matchText.text = "一筆書き失敗";
+                DOVirtual.DelayedCall(0.5f, () => gamestate = GameState.LOSER);
+            }
+            else
+            {
+                matchText.text = "一筆書き成功";
+                stageDataIndex++;
+                DOVirtual.DelayedCall(0.5f, () => gamestate = GameState.VICTORY);
+            }
         }
     }
 
@@ -322,21 +349,54 @@ public class InGameModel : MonoBehaviour
         {
             var line = sr.ReadLine();
             var cols = line.Split(',');
-            if (cols.Length != 5) continue;
+            if (cols.Length != 3) continue;
 
             stagecsvdata.Add(
                 new StageData.StageDataFormat(
                     int.Parse(cols[0]),
                     int.Parse(cols[1]),
-                    int.Parse(cols[2]),
-                    int.Parse(cols[3]),
-                    int.Parse(cols[4])
+                    int.Parse(cols[2])
                     )
                 );
         }
         stageDatas = stagecsvdata.ToArray();
-
     }
+    private void Clear()
+    {
+        inGamePanel.raycastTarget = false;
+        Debug.Log(gamestate);
+    }
+
+    private int stageDataIndex = 1;
+    //削除するタイル群
+    private void LoadDeleteTileModel()
+    {
+        //Debug.Log(stageDatas[0].ToString());
+        var stagecsvdata = new List<StageData.DeleteDataFormat>();
+        var csvdata = Resources.Load<TextAsset>("DeleteData"+ stageDataIndex).text;
+
+        StringReader sr = new StringReader(csvdata);
+        while (sr.Peek() != -1)
+        {
+            var line = sr.ReadLine();
+            var cols = line.Split(',');
+            if (cols.Length != 2) continue;
+
+            stagecsvdata.Add(
+                new StageData.DeleteDataFormat(
+                    int.Parse(cols[0]),
+                    int.Parse(cols[1])
+                    )
+                );
+        }
+        deleteDatas = stagecsvdata.ToArray();
+        
+    }
+
+
+
+
+
 
     private void CountStageIndex()
     {
@@ -352,8 +412,8 @@ public class InGameModel : MonoBehaviour
     {
         if (stagedataidx >= stageDatas.Length)
         {
-            //todo:ステージ上限まで行ったらステージ０に戻る
-            matchText.text = "全てのステージクリア";
+            
+            
             return;
         }else { 
             ResetStage();
@@ -380,7 +440,9 @@ public class InGameModel : MonoBehaviour
             tileList.Remove(tileArray[i]);
 
         }
+        //stageDataIndex++;
         SetStageData();
+        LoadDeleteTileModel();
         for (var i = 0; i < MaxCol; i++)
         {
             for (var j = 0; j < MaxRow; j++)

@@ -9,18 +9,26 @@ public class StageData : MonoBehaviour
         public readonly int stageIndex;
         public readonly int xPos;
         public readonly int yPos;
-        public readonly int depressionxPos;
-        public readonly int depressionyPos;
 
         //後ほど追加でPrefab名参照
 
-        public StageDataFormat(int _stageIndex, int _xPos, int _yPos ,int _depressionxPos, int _depressionyPos)
+        public StageDataFormat(int _stageIndex, int _xPos, int _yPos)
         {
             stageIndex = _stageIndex;
             xPos = _xPos;
             yPos = _yPos;
-            depressionxPos = _depressionxPos;
-            depressionyPos = _depressionyPos;
+        }
+    }
+
+    public struct DeleteDataFormat
+    {
+        public readonly int xPos;
+        public readonly int yPos;
+
+        public DeleteDataFormat(int _xPos, int _yPos)
+        {
+            xPos = _xPos;
+            yPos = _yPos;
         }
     }
 }

@@ -7,7 +7,7 @@ public class Tile : MonoBehaviour
 {
     [SerializeField] private Image image;
     public bool flg = false;
-    private string colorString = "#FFFFFF";
+    private string colorString = "#ffffff";
     public (float, float, float, float) tileOffset;
     [SerializeField] private Sprite[] indexImage;
     [SerializeField] private string[] colorCode;
@@ -52,7 +52,7 @@ public class Tile : MonoBehaviour
     public void StartTilePos(int stageIndex)
     {
         image.sprite = indexImage[stageIndex];
-       // image.color = Color.blue;
+        image.color = Color.white;
     }
 
     public void DrawHeadTile(int stageIndex)
@@ -60,7 +60,7 @@ public class Tile : MonoBehaviour
         image.sprite = indexImage[stageIndex];
         Color color = default(Color);
         ColorUtility.TryParseHtmlString(colorString, out color);
-        image.color = color;
+        image.color = Color.white;
         flg = true;
     }
 
