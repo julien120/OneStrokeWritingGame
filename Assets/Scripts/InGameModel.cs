@@ -29,6 +29,9 @@ public class InGameModel : MonoBehaviour
     private readonly Subject<Unit> clearEffect = new Subject<Unit>();
     public IObservable<Unit> IOclearEffect => clearEffect;
 
+    private readonly Subject<Unit> setResultPanel = new Subject<Unit>();
+    public IObservable<Unit> IOsetResultPanel => setResultPanel;
+
     //GUI
     [SerializeField] private Image inGamePanel;
 
@@ -53,12 +56,15 @@ public class InGameModel : MonoBehaviour
     private int stagedataidx = 0;
     private bool stageIndexFlg = true;
 
+    private int nextStageCount = 1;
+
     void Start()
     {
         tileQueue = new Tile[ MaxCol,MaxRow];
         Initialize();
 
-        ResetStageIndex();
+        //ResetStageIndex();
+        
         LoadLevelDesignModel();
         SetLevelDesignModel();
         SetDepressionPosData();
@@ -67,6 +73,11 @@ public class InGameModel : MonoBehaviour
 
     public void Initialize()
     {
+        if (PlayerPrefs.HasKey(PlayerPrefsKeyName.ClearStageIndexData) == false)
+        {
+            PlayerPrefs.SetInt(PlayerPrefsKeyName.ClearStageIndexData, 9);
+        }
+
         gameProcList = new Dictionary<GameState, gameProc> {
             { GameState.IDLE, Idle },
             { GameState.MATCH, MatchAllTile},
@@ -77,12 +88,11 @@ public class InGameModel : MonoBehaviour
             };
         gamestate = GameState.IDLE;
 
-
+        LoadSaveData();
         SetStageData();
         LoadDeleteTileModel();
         pointer = new PointerEventData(EventSystem.current); 
     }
-
 
 
     private void SetStageData()
@@ -276,15 +286,25 @@ public class InGameModel : MonoBehaviour
         }
     }
 
+    bool effectFlg = true;
     private void SetVictryeffects()
     {
-        stageIndexFlg = true;
-        inGamePanel.raycastTarget = false;
-        //clearEffectの通知が終わった段階じゃなくて、clearEffectの処理が終わった段階でステイト変更する方法とは？
-        //UniTaskでやるの？
-        clearEffect.OnNext(Unit.Default);
-        //gamestate = GameState.RESULT;
-        DOVirtual.DelayedCall(1.0f, () => {gamestate = GameState.RESULT;});  
+        if(effectFlg)
+        {
+             effectFlg = false;
+            stageIndexFlg = true;
+             inGamePanel.raycastTarget = false;
+            //clearEffectの通知が終わった段階じゃなくて、clearEffectの処理が終わった段階でステイト変更する方法とは？
+            //UniTaskでやるの？
+            clearEffect.OnNext(Unit.Default);
+            //gamestate = GameState.RESULT;
+            DOVirtual.DelayedCall(0.5f, () => { setResultPanel.OnNext(Unit.Default); });
+        }
+    }
+    public void LoadNextStage()
+    {
+        effectFlg = true;
+       gamestate = GameState.RESULT;
     }
 
     private void SetLoserffects()
@@ -323,13 +343,15 @@ public class InGameModel : MonoBehaviour
             if (tileList.Any(x => !x.flg))
             {
                 matchText.text = "一筆書き失敗";
-                DOVirtual.DelayedCall(0.5f, () => gamestate = GameState.LOSER);
+                DOVirtual.DelayedCall(0.3f, () => gamestate = GameState.LOSER);
             }
             else
             {
                 matchText.text = "一筆書き成功";
                 stageDataIndex++;
-                DOVirtual.DelayedCall(0.5f, () => gamestate = GameState.VICTORY);
+                nextStageCount = stageDataIndex;
+                UpdateStageLevelSelection();
+                DOVirtual.DelayedCall(0.3f, () => gamestate = GameState.VICTORY);
             }
         }
     }
@@ -371,9 +393,11 @@ public class InGameModel : MonoBehaviour
     //削除するタイル群
     private void LoadDeleteTileModel()
     {
-        //Debug.Log(stageDatas[0].ToString());
+        
+        var index = "DeleteData" + PlayerPrefs.GetInt(PlayerPrefsKeyName.ClearStageIndexData);
+        Debug.Log(index);
         var stagecsvdata = new List<StageData.DeleteDataFormat>();
-        var csvdata = Resources.Load<TextAsset>("DeleteData"+ stageDataIndex).text;
+        var csvdata = Resources.Load<TextAsset>(index).text;
 
         StringReader sr = new StringReader(csvdata);
         while (sr.Peek() != -1)
@@ -393,16 +417,13 @@ public class InGameModel : MonoBehaviour
         
     }
 
-
-
-
-
-
     private void CountStageIndex()
     {
         if (stageIndexFlg && nextflg)
         {
+
             stagedataidx++;
+            nextStageCount = stagedataidx;
             stageIndexFlg = false;
         }
     }
@@ -454,5 +475,26 @@ public class InGameModel : MonoBehaviour
 
         SetDepressionPosData();
     }
+
+
+    private void UpdateStageLevelSelection()
+    {
+        if(stageDatas.Length> PlayerPrefs.GetInt(PlayerPrefsKeyName.ClearStageIndexData))
+        {
+            PlayerPrefs.SetInt(PlayerPrefsKeyName.ClearStageIndexData, stageDatas[stagedataidx].stageIndex+1);
+        }else
+        {
+            PlayerPrefs.SetInt(PlayerPrefsKeyName.ClearStageIndexData, 1);
+            stagedataidx = -1;
+        }
+    }
+
+    private void LoadSaveData()
+    {
+        stagedataidx = PlayerPrefs.GetInt(PlayerPrefsKeyName.ClearStageIndexData)-1;
+        
+    }
+
+
 
 }

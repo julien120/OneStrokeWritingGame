@@ -1,4 +1,4 @@
 public class PlayerPrefsKeyName
 {
-    public const string ClearStageIndexDATA = "CLEARSTAGEDATA";
+    public const string ClearStageIndexData = "CLEARSTAGEDATA";
 }

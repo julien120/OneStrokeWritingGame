@@ -15,6 +15,8 @@ public class InGamePresenter : MonoBehaviour
     void Start()
     {
         inGameModel.IOclearEffect.Subscribe(_ => inGameView.SetClearEffect());
+        inGameModel.IOsetResultPanel.Subscribe(_ => inGameView.OpenResultPanel());
+        inGameView.IOloadStage.Subscribe(_ => inGameModel.LoadNextStage());
     }
 
     // Update is called once per frame
