@@ -19,11 +19,15 @@ public class InGameView : MonoBehaviour
     private readonly Subject<Unit> loadStage = new Subject<Unit>();
     public IObservable<Unit> IOloadStage => loadStage;
 
+    private readonly Subject<Unit> setVideoAds = new Subject<Unit>();
+    public IObservable<Unit> IOsetVideoAds => setVideoAds;
+
     void Start()
     {
         nextButton.onClick.AddListener(() =>
         {
             DOVirtual.DelayedCall(0.3f, () => resultPanel.SetActive(false));
+            setVideoAds.OnNext(Unit.Default);
             loadStage.OnNext(Unit.Default);
         });
     }

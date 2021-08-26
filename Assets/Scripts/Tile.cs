@@ -30,6 +30,7 @@ public class Tile : MonoBehaviour
         Color color = default(Color);
         ColorUtility.TryParseHtmlString(colorCode[stageIndex], out color);
         image.color = color;
+        image.sprite = null;
     }
 
 

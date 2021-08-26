@@ -395,7 +395,7 @@ public class InGameModel : MonoBehaviour
     {
         
         var index = "DeleteData" + PlayerPrefs.GetInt(PlayerPrefsKeyName.ClearStageIndexData);
-        Debug.Log(index);
+//        Debug.Log(index);
         var stagecsvdata = new List<StageData.DeleteDataFormat>();
         var csvdata = Resources.Load<TextAsset>(index).text;
 
